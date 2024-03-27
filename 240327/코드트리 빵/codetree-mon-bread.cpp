@@ -1,232 +1,167 @@
 #include <iostream>
 #include<vector>
 #include<queue>
-
 using namespace std;
 
-class Vertex {
-public:
-	int state; // 0이면 빈칸 1이면 basecamp
-	int store; // 편의점
-	Vertex() {
-		this->state = 0;
-		this->store = 0;
-	}
-	Vertex(int state, int store) {
-		this->state = state;
-		this->store = store;
-	}
-};
-class Person {
+class Person{
 public:
 	int r, c;
-
+	bool isArrived;
 	Person() {
 		this->r = 0;
 		this->c = 0;
+		this->isArrived = false;
 	}
-	Person(int r, int c) {
+	Person(int r, int c, bool isArrived) {
 		this->r = r;
 		this->c = c;
+		this->isArrived = isArrived;
 	}
 };
-class qV {
-	int r, c, cnt;
 
-};
-int n, m, answer;
-vector<vector<Vertex>> map;
+int n, m, t = 0, cntArrivedPerson = 0;
+vector<vector<int>> map;
+vector<pair<int, int>> storePosList;
 vector<Person> personList;
-int dr[4] = { -1, 0, 0, 1 }; // 상 좌 우 하
-int dc[4] = { 0, -1, 1, 0 };
+
 
 void move();
-bool isGameover();
-void block();
-void goBasecamp();
-
-void move() {
-	// 격자에 있는 사람들 모두가 편의점 향해서 움직임
-	for (int i = 1; i < personList.size(); i++) {
-		int storeR = 0, storeC = 0;
-
-		// 해당 편의점 찾기
-		for (int r = 1; r <= n; r++) {
-			for (int c = 1; c <= n; c++) {
-				if (map[r][c].store == i) {
-					storeR = r;
-					storeC = c;
-				}
-				if (storeR > 0) break;
-			}
-			if (storeR > 0) break;
-		}
-
-		// 만약 이미 편의점에 도착한 상태면 그사람 넘어가
-		if (map[storeR][storeC].state == -1) continue;
-
-		// 최단거리로 상좌우하의 우선순위로 움직임 
-		// bfs로 편의점에서 부터 각 좌표까지의 거리를 다 기록함
-		vector<vector<int>> disMap(n + 1, vector<int>(n + 1, 10000));
-		vector<vector<bool>> visited(n + 1, vector<bool>(n + 1, false));
-		queue<pair<int, pair<int, int>>> q; // 거리, (좌표)
-		
-		disMap[storeR][storeC] = 0;
-		q.push({ 0, {storeR, storeC} });
-		visited[storeR][storeC] = true;
-
-		while (!q.empty()) {
-			int curDis = q.front().first;
-			int curR = q.front().second.first;
-			int curC = q.front().second.second;
-			q.pop();
-
-			for (int dir = 0; dir < 4; dir++) {
-				int nDis = curDis + 1;
-				int nr = curR + dr[dir];
-				int nc = curC + dc[dir];
-				// 격자를 벗어나거나 방문한 곳이거나 state가 -1인곳은 넘어가
-				if (nr < 1 || nc < 1 || nr > n || nc > n || visited[nr][nc] || map[nr][nc].state == -1) continue;
-
-				disMap[nr][nc] = nDis;
-				q.push({ nDis,{nr, nc} });
-				visited[nr][nc] = true;
-			}
-		}
-		// 사람위치에서 상좌우하 순서로 확인해보고 min 갱신하면서 방향 기록
-		int min = 10000;
-		int nDir = -1;
-		for (int dir = 0; dir < 4; dir++) {
-			int nr = personList[i].r + dr[dir];
-			int nc = personList[i].c + dc[dir];
-			// 격자를 벗어난 곳이거나 state -1인곳은 넘어가
-			if (nr < 1 || nc < 1 || nr > n || nc > n || map[nr][nc].state == -1) continue;
-			// 더 작으면 min 갱신하면서 방향 기록
-			if (min > disMap[nr][nc]) {
-				min = disMap[nr][nc];
-				nDir = dir;
-			}
-		}
-
-		// 방향 결정됐으니 이동한다
-		personList[i].r = personList[i].r + dr[nDir];
-		personList[i].c = personList[i].c + dc[nDir];
-	}
-}
-bool isGameover() {
-	// 사람들이 모두 도착 한지 확인
-	// 도착 했으면 true, 아니면 false를 return
-	for (int i = 1; i < personList.size(); i++) {
-		int pr = personList[i].r;
-		int pc = personList[i].c;
-		if (map[pr][pc].store != i) return false;
-	}
-	return true;
-}
-void block() {
-	// 편의점에 도착한 사람있으면 그 자리 지나갈수 없게만들어
-	// 
-	// 편의점 도착한 사람 찾기
-	for (int i = 1; i < personList.size(); i++) {
-		int pr = personList[i].r;
-		int pc = personList[i].c;
-		if (map[pr][pc].store == i) {
-			// 그 자리 못지나가는 state => -1 로 만들기
-			map[pr][pc].state = -1;
-		}
-	}
-}
-void goBasecamp() {
-	if (answer <= m) { // 4명이면 m
-		// 편의점과 가장 가까이 있는 베이스 캠프를 찾음
-
-		// 해당 편의점 찾기
-		int storeR = 0, storeC = 0;
-		for (int i = 1; i <= n; i++) {
-			for (int j = 1; j <= n; j++) {
-				if (map[i][j].store == answer) {
-					storeR = i;
-					storeC = j;
-				}
-				if (storeR > 0) break;
-			}
-			if (storeR > 0) break;
-		}
-
-		// bfs로 편의점부터 베이스 캠프까지 거리 탐색
-		// bfs로 편의점에서 부터 각 좌표까지의 거리를 다 기록함
-		vector<vector<int>> disMap(n + 1, vector<int>(n + 1, 10000));
-		vector<vector<bool>> visited(n + 1, vector<bool>(n + 1, false));
-		queue<pair<int, pair<int, int>>> q; // 거리, (좌표)
-
-		disMap[storeR][storeC] = 0;
-		q.push({ 0, {storeR, storeC} });
-		visited[storeR][storeC] = true;
-
-		while (!q.empty()) {
-			int curDis = q.front().first;
-			int curR = q.front().second.first;
-			int curC = q.front().second.second;
-			q.pop();
-
-			for (int dir = 0; dir < 4; dir++) {
-				int nDis = curDis + 1;
-				int nr = curR + dr[dir];
-				int nc = curC + dc[dir];
-				// 격자를 벗어나거나 방문한 곳이거나 state가 -1인곳은 넘어가
-				if (nr < 1 || nc < 1 || nr > n || nc > n || visited[nr][nc] || map[nr][nc].state == -1) continue;
-
-				disMap[nr][nc] = nDis;
-				q.push({ nDis,{nr, nc} });
-				visited[nr][nc] = true;
-			}
-		}
-
-		// 베이스 캠프만 조사해서 제일 작은 거리가 몇인지 파악
-		int min = 10000;
-		int nr = 0, nc = 0;
-		for (int i = 1; i <= n; i++) {
-			for (int j = 1; j <= n; j++) {
-				if (map[i][j].state == 1) { // 상태가 베이스 캠프면
-					if (min > disMap[i][j]) { // min과 비교해서 더 작으면 갱신해라
-						min = disMap[i][j];
-						nr = i;
-						nc = j;
-					}
-				}
-			}
-		}
-
-		// 해당 베이스 캠프로 들어간다
-		map[nr][nc].state = -1;
-		personList.push_back(Person(nr, nc));
-	}
-}
+void arrive();
+void intoBasecamp();
+int bfs(int r1, int c1, int r2, int c2);
 
 int main() {
 	cin >> n >> m;
-	map = vector<vector<Vertex>>(n + 1, (vector<Vertex>(n + 1)));
-	personList = vector<Person>(1); // 0번 인덱스 버리려고 하나는 미리 넣어둠
+	map = vector<vector<int>>(n + 1, vector<int>(n + 1));
+	storePosList = vector<pair<int, int>>(m + 1);
+	personList = vector<Person>(m + 1);
+	
 	for (int i = 1; i <= n; i++) {
 		for (int j = 1; j <= n; j++) {
-			cin >> map[i][j].state;
+			cin >> map[i][j];
 		}
 	}
-
 	for (int i = 1; i <= m; i++) {
 		int r, c;
 		cin >> r >> c;
-		map[r][c].store = i;
+		storePosList[i] = { r, c };
 	}
 
-	answer = 0; // 시간
+	t = 0;
+	cntArrivedPerson = 0;
 	while (1) {
-		answer++;
+		t++;
 		move();
-		block();
-		goBasecamp();
-		if (isGameover()) break;
+		arrive();
+		intoBasecamp();
+		if (cntArrivedPerson == m) {
+			cout << t;
+			return 0;
+		}
 	}
-	cout << answer;
-	return 0;
+}
+
+// 1번행동
+// 격자에 있는 사람들 모두 가고싶은 편의점을 향해 최단거리로 1칸 이동
+// 최단거리는 이동후 도달까지 거리가(지나갈수있는길만 지나갔을때) 최소가 되는 거리를 뜻함
+// 상 좌 우 하 순서로 움직임
+void move() {
+	// 격자안에 있는 사람만 순회 // 격자에 t번째사람은 3번행동에서 들어옴
+	for (int num = 1; num < m + 1; num++) {
+		// 해당 번호사람이 움직일수있는지 확인
+		if (num >= t) return;
+		if (personList[num].isArrived) continue; 
+		int curDis = bfs(personList[num].r, personList[num].c, storePosList[num].first, storePosList[num].second);
+		// 해당번호 사람 기준 상 좌 우 하 순서로 좌표순회
+		int dr[4] = { -1, 0, 0, 1 };
+		int dc[4] = { 0, -1, 1, 0 };
+		for (int d = 0; d < 4; d++) {
+			int nextR = personList[num].r + dr[d];
+			int nextC = personList[num].c + dc[d];
+			if (nextR < 1 || nextC < 1 || nextR > n || nextC > n || map[nextR][nextC] < 0) continue;
+			int nextDis = bfs(nextR, nextC, storePosList[num].first, storePosList[num].second);
+			// nextDis - curDis == -1 이면 그쪽으로 움직여
+			if (nextDis - curDis == -1) {
+				personList[num].r = nextR;
+				personList[num].c = nextC;
+			}
+		}
+	}
+}
+// 2번행동 
+// 편의점에 도착시 멈추게 되고, 이때부터 다른사람들은 그칸을 지나갈수없음 
+// 주의! 격자에 있는 사람들이 모두 이동한뒤에 해당칸을 지나갈수없어지는것
+void arrive(){
+	for (int i = 1; i <= m; i++) {
+		if (personList[i].isArrived) continue; // 이미 도착처리한사람이면 넘어가
+		int pR = personList[i].r;
+		int pC = personList[i].c;
+		int sR = storePosList[i].first;
+		int sC = storePosList[i].second;
+		
+		if (pR == sR && pC == sC) {
+			map[pR][pC] = -1;
+			personList[i].isArrived = true;
+			cntArrivedPerson++;
+		}
+	}
+}
+// 3번행동
+// 현재 t분이면 t번 사람이 베이스캠프에 들어갈거임 (t<=m)
+// 자신이 가고 싶은 편의점과 가장 가까이에 있는 베이스캠프에 들어가는것
+// 행이 작은 베이스캠프 , 열이 작은 베이스캠프 우선순위
+// 사람들이 모두 이동한뒤 베이캠프는 폐쇄
+void intoBasecamp(){
+	if (t > m) return; // m명의 사람이 있기때문에 그 보다 큰 번호인 사람은 없다
+	int minDis = 2100000000;
+	int minR = 0, minC = 0;
+	for (int i = 1; i <= n; i++) {
+		for (int j = 1; j <= n; j++) {
+			if (map[i][j] != 1) continue;
+
+			int dis = bfs(i, j, storePosList[t].first, storePosList[t].second);
+
+			if (dis < minDis) {
+				minDis = dis;
+				minR = i;
+				minC = j;
+			}
+		}
+	}
+	personList[t].r = minR;
+	personList[t].c = minC;
+	map[minR][minC] = -1; //폐쇄
+}
+
+// 최단거리를 구해 r1,c1 -> r2, c2
+int bfs(int r1, int c1, int r2, int c2) {
+	int dr[4] = { -1, 0, 0, 1 };
+	int dc[4] = { 0, -1, 1, 0 };
+	queue<pair<pair<int, int>, int>> q;
+	vector<vector<bool>> visited(n + 1, vector<bool>(n + 1));
+
+	q.push({ { r1, c1 }, 0 });
+	visited[r1][c1] = true;
+
+	while (!q.empty()) {
+		int curR = q.front().first.first;
+		int curC = q.front().first.second;
+		int curCnt = q.front().second;
+		q.pop();
+
+		if (curR == r2 && curC == c2) {
+			return curCnt;
+		}
+
+		for (int d = 0; d < 4; d++) {
+			int nextR = curR + dr[d];
+			int nextC = curC + dc[d];
+			if (nextR < 1 || nextC < 1 || 
+				nextR > n || nextC > n ||
+				visited[nextR][nextC] || map[nextR][nextC] < 0) continue;
+
+			q.push({ { nextR, nextC }, curCnt + 1 });
+			visited[nextR][nextC] = true;
+		}
+	}
 }
