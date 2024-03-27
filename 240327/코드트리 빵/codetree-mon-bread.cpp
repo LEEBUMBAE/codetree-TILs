@@ -69,7 +69,7 @@ void move() {
 	// 격자안에 있는 사람만 순회 // 격자에 t번째사람은 3번행동에서 들어옴
 	for (int num = 1; num < m + 1; num++) {
 		// 해당 번호사람이 움직일수있는지 확인
-		if (num >= t) return;
+		if (num >= t) break;
 		if (personList[num].isArrived) continue; 
 		int curDis = bfs(personList[num].r, personList[num].c, storePosList[num].first, storePosList[num].second);
 		// 해당번호 사람 기준 상 좌 우 하 순서로 좌표순회
