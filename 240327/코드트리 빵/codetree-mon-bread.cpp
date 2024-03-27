@@ -34,7 +34,7 @@ int main() {
 	cin >> n >> m;
 	map = vector<vector<int>>(n + 1, vector<int>(n + 1));
 	storePosList = vector<pair<int, int>>(m + 1);
-	personList = vector<Person>(m + 1);
+	personList = vector<Person>(m + 1, Person());
 	
 	for (int i = 1; i <= n; i++) {
 		for (int j = 1; j <= n; j++) {
@@ -67,7 +67,7 @@ int main() {
 // 상 좌 우 하 순서로 움직임
 void move() {
 	// 격자안에 있는 사람만 순회 // 격자에 t번째사람은 3번행동에서 들어옴
-	for (int num = 1; num < m + 1; num++) {
+	for (int num = 1; num <= m; num++) {
 		// 해당 번호사람이 움직일수있는지 확인
 		if (num >= t) return;
 		if (personList[num].isArrived) continue; 
