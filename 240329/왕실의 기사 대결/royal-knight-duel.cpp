@@ -7,7 +7,7 @@ using namespace std;
 class Knight {
 public:
 	int r, c, h, w, k;
-	bool attacked; // 초기명령받은기사or안 움직인기사 0, 밀쳐진기사 = 1
+	bool attacked; // 초기명령받은기사or안 움직인기사 false, 밀쳐진기사 true
 	int damageSum; // 누적받은데미지
 	bool dead; // 죽었는지
 	
@@ -87,7 +87,8 @@ int main() {
 		answer += knightList[i].damageSum;
 	}
 	cout << answer;
-	
+
+	return 0;
 }
 
 // 1 기사이동
@@ -97,7 +98,7 @@ int main() {
 // 이동방향 끝에 벽이 있다면 모든 기사는 이동 불가
 // 체스판 밖 기사에게 명령하면 아무 반응없음
 bool canMove(int knightN, int knightD, int cnt) {
-	Knight knight = knightList[knightN];
+	Knight &knight = knightList[knightN];
 	// 기사가 죽은놈인지 판별(체스판 밖 기사면 안됨)
 	if (knight.dead) return false;
 
@@ -333,6 +334,9 @@ void getDamage() {
 			curKnight.k -= trapNum;
 			curKnight.damageSum += trapNum;
 
+			// 명령받은, 밀쳐진기사여부 초기화
+			curKnight.attacked = false;
+
 			// 이번턴에 죽은기사는 기사맵에서 지우고, 기사정보에 죽었다고 기록
 			if (curKnight.k <= 0) {
 				for (int i = 1; i <= L; i++) {
@@ -340,7 +344,6 @@ void getDamage() {
 						visited[i][j] = false;
 					}
 				}
-				int trapNum = 0; // 장애물수
 
 				q.push({ curKnight.r, curKnight.c });
 				visited[curKnight.r][curKnight.c] = true;
@@ -364,9 +367,6 @@ void getDamage() {
 				}
 				curKnight.dead = true;
 			}
-
-			// 명령받은, 밀쳐진기사여부 초기화
-			curKnight.attacked = false;
 		}
 	}
 }
