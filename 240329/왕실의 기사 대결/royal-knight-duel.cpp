@@ -230,7 +230,9 @@ pair<int, vector<int>> search(Knight& knight, int knightD) {
 }
 
 void move(int knightN, int knightD) {
-	// 움직일땐 명령받은 덩어리 기준 통째로 옮기면됨
+	// 움직일땐 명령받은 덩어리 기준 통째로 옮기면됨 <= 잘못된생각
+	// => 덩어리를 bfs로 그냥 찾는게 아니라  명령받은애랑, attacked 당한애만 bfs 돌면서 움직여야함
+	
 	vector<vector<int>> tempMap(L + 1, vector<int>(L + 1));
 	vector<vector<bool>> visited(L + 1, vector<bool>(L + 1));
 	queue<pair<int, int>> q;
@@ -238,24 +240,34 @@ void move(int knightN, int knightD) {
 	q.push({ knightList[knightN].r , knightList[knightN].c });
 	visited[knightList[knightN].r][knightList[knightN].c] = true;
 	// 이동하기
+	// 순회할때는 knightMap 이용해서 덩어리 기존위치를 기준으로 순회 
 	while (!q.empty()) {
 		int curR = q.front().first;
 		int curC = q.front().second;
 		q.pop();
 		
-		// 한격자씩 이동시켜서 tempMap에 저장
+		// 한개씩 이동시켜서 tempMap에 저장
 		tempMap[curR + dR[knightD]][curC + dC[knightD]] = knightMap[curR][curC];
 		
 		for (int d = 0; d < 4; d++) {
 			int nextR = curR + dR[d];
 			int nextC = curC + dC[d];
 			if (nextR < 1 || nextC < 1 ||
-				nextR > L || nextC > L || visited[nextR][nextC] || knightMap[nextR][nextC] == 0) continue;
+				nextR > L || nextC > L || 
+				visited[nextR][nextC] ||
+				!(knightMap[nextR][nextC] == knightN || knightList[knightMap[nextR][nextC]].attacked)) continue;
 			q.push({ nextR, nextC });
 			visited[nextR][nextC] = true;
 		}
 	}
 
+	for (int i = 1; i <= L; i++) {
+		for (int j = 1; j <= L; j++) {
+			if (!visited[i][j] && knightMap[i][j] != 0) {
+				tempMap[i][j] = knightMap[i][j];
+			}
+		}
+	}
 	// 맵 복사
 	for (int i = 1; i <= L; i++) {
 		for (int j = 1; j <= L; j++) {
@@ -323,11 +335,15 @@ void getDamage() {
 
 			// 이번턴에 죽은기사는 기사맵에서 지우고, 기사정보에 죽었다고 기록
 			if (curKnight.k <= 0) {
-				vector<vector<bool>> visited2(L + 1, vector<bool>(L + 1));
+				for (int i = 1; i <= L; i++) {
+					for (int j = 1; j <= L; j++) {
+						visited[i][j] = false;
+					}
+				}
 				int trapNum = 0; // 장애물수
 
 				q.push({ curKnight.r, curKnight.c });
-				visited2[curKnight.r][curKnight.c] = true;
+				visited[curKnight.r][curKnight.c] = true;
 
 				while (!q.empty()) {
 					int curR = q.front().first;
@@ -341,9 +357,9 @@ void getDamage() {
 						int nextR = curR + dR[d];
 						int nextC = curC + dC[d];
 						if (nextR < 1 || nextC < 1 ||
-							nextR > L || nextC > L || visited2[nextR][nextC] || knightMap[nextR][nextC] != i) continue;
+							nextR > L || nextC > L || visited[nextR][nextC] || knightMap[nextR][nextC] != i) continue;
 						q.push({ nextR, nextC });
-						visited2[nextR][nextC] = true;
+						visited[nextR][nextC] = true;
 					}
 				}
 				curKnight.dead = true;
