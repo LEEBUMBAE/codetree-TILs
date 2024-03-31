@@ -118,7 +118,7 @@ bool canMove(int knightN, int knightD, int cnt) {
 		}
 	}
 	else if (resultSearch.first == 3) { //3. 장애물 or 빈칸
-		flag true;
+		flag = true;
 	}
 	// 모든 재귀가 끝났을때
 		// 영향 받는 기사중에 벽을 만난 기사가 하나라도 있다면
