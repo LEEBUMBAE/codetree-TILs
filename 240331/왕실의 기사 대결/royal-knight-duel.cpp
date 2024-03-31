@@ -19,6 +19,9 @@ int map[41][41];
 vector<Knight> knightList;
 
 void move(int num, int dir) {
+	// 이미 죽은기사에대한 명령이 나올수있음에 주의!
+	if (knightList[num].k <= 0) return;
+
 	queue<int> q;
 	vector<bool> visited(N + 1, false);
 	vector<vector<int>> knightMap(L + 1, vector<int>(L + 1, 0));
@@ -90,14 +93,15 @@ void move(int num, int dir) {
 void getDamage() {
 	for (int i = 1; i <= N; i++) {
 		if (!knightList[i].attacked) continue;
-		int damage = 0;
+		if (knightList[i].k <= 0)continue;
+		int trap = 0;
 		for (int r = knightList[i].r; r < knightList[i].r + knightList[i].h; r++) {
 			for (int c = knightList[i].c; c < knightList[i].c + knightList[i].w; c++) {
-				if (map[r][c] == 1) damage++;
+				if (map[r][c] == 1) trap++;
 			}
 		}
-		knightList[i].damage += damage;
-		knightList[i].k -= damage;
+		knightList[i].damage += trap;
+		knightList[i].k -= trap;
 		knightList[i].attacked = false;
 	}
 }
