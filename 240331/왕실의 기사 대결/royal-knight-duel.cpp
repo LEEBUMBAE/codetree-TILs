@@ -92,7 +92,7 @@ void getDamage() {
 		if (!knightList[i].attacked) continue;
 		int damage = 0;
 		for (int r = knightList[i].r; r < knightList[i].r + knightList[i].h; r++) {
-			for (int c = knightList[i].c; c <= knightList[i].c + knightList[i].w; c++) {
+			for (int c = knightList[i].c; c < knightList[i].c + knightList[i].w; c++) {
 				if (map[r][c] == 1) damage++;
 			}
 		}
