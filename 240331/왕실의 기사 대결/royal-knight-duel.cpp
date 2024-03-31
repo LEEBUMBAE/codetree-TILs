@@ -105,7 +105,7 @@ bool canMove(int knightN, int knightD, int cnt) {
 	bool flag = true;
 	if (resultSearch.first == 1) { // 1. 벽
 		
-		return flag;
+		flag= false;
 	}
 	else if (resultSearch.first == 2) { //2. 기사 
 		
