@@ -1,209 +1,255 @@
-#include <iostream>
+#include<iostream>
 #include<vector>
+#include<algorithm>
+#include<cmath>
 
 using namespace std;
 
-// 클래스 선언
-class Vertex {
-public:
-	int state;
-	int player;
-	Vertex() {
-		this->state = 0;
-		this->player = 0;
-	}
-	Vertex(int state, int player) {
-		this->state = state;
-		this->player = player;
-	}
-};
+// 참가자: -1 ~ -10, 빈칸: 0, 벽: 1~ 10 출구: 10 
+int dR[4] = { -1, 1, 0, 0 }; // 상하좌우
+int dC[4] = { 0, 0, -1, 1 };
+vector<vector<int>> map;
+int N, M, K;
+int minSize, sumMoveDis;
 
-// 변수 선언
-int N, M, K, answer; // 맵크기, 참가자 수, 게임시간, 참가자들 이동거리
-vector<vector<Vertex>> map; // 맵
-pair<int, int> exitPoint; // 출구좌표
-int dr[4] = { -1, 1, 0, 0 };
-int dc[4] = { 0, 0, -1, 1 };
-
-// 함수 선언
 void move();
-bool isGameover();
-void subrotate(int r, int c, int minL);
 void rotate();
-void getExitPoint();
+bool checkGG();
+pair<int, int> checkExit();
+void copyMap(vector<vector<int>>& map1, vector<vector<int>>& map2);
+void getMinSize();
+int checkDis(int i, int j, int r, int c);
+int getSize(int r, int c, int exitR, int exitC);
+bool checkRec(int r, int c);
 
-// 함수 정의
-void move() {
-	vector<vector<Vertex>> newMap(N + 1, vector<Vertex>(N + 1));
-	
-	// newMap에 맵복사, state는 복사해 둬도 됨. 바뀌는게 없거든
+int main() {
+	cin >> N >> M >> K;
+	map = vector<vector<int>>(N + 1, vector<int>(N + 1, 0));
+
 	for (int i = 1; i <= N; i++) {
 		for (int j = 1; j <= N; j++) {
-				newMap[i][j].state = map[i][j].state;
+			cin >> map[i][j];
 		}
 	}
+	for (int i = 1; i <= M; i++) {
+		int r, c;
+		cin >> r >> c;
+		map[r][c]--;
+	}
+	int r, c;
+	cin >> r >> c;
+	map[r][c] = 10;
 
-	// newMap에 이동시킴
+
+	sumMoveDis = 0;
+	for (int k = 1; k <= 8; k++) {
+		move();
+
+		//cout << "AFTER MOVE" << "\n";
+		//for (int i = 1; i <= N; i++) {
+		//	for (int j = 1; j <= N; j++) {
+		//		cout << map[i][j] << " ";
+		//	}
+		//	cout << "\n";
+		//}
+
+		if (checkGG()) {
+			break;
+		}
+		minSize = 2100000000;
+		rotate();
+
+		//cout << "AFTER rotate" << "\n";
+		//for (int i = 1; i <= N; i++) {
+		//	for (int j = 1; j <= N; j++) {
+		//		cout << map[i][j] << " ";
+		//	}
+		//	cout << "\n";
+		//}
+	}
+	pair<int, int> exitPoint = checkExit();
+	cout << sumMoveDis << "\n";
+	cout << exitPoint.first << " " << exitPoint.second << "\n";
+}
+
+void move() {
+	// 옮길땐 tempMap을 활용하여 옮긴다
+	vector<vector<int>> tempMap(N + 1, vector<int>(N + 1, 0));
+	copyMap(tempMap, map);
+
 	for (int i = 1; i <= N; i++) {
 		for (int j = 1; j <= N; j++) {
-			if (map[i][j].player > 0) {
-				int curDis = abs(i - exitPoint.first) + abs(j - exitPoint.second); // 최단거리
+			// 참가자가 있는칸이면 로직 시작
+			if (map[i][j] > 0) continue;
+			
+			// 최단 거리를 잰다
+			pair<int, int> exit = checkExit();
+			int curDis = checkDis(i, j, exit.first, exit.second);
 
-				// 사방 탐색 하면서 출구까지 거리확인
-				bool moveFlag = false;
-				for (int dir = 0; dir < 4; dir++) {
-					int nr = i + dr[dir]; // 상하먼저
-					int nc = j + dc[dir];
+			// 상하좌우로 움직여보면서 최단거리를 재보고 그 최단거리가 현재보다 -1인곳이면 그곳으로 옮긴다.
+			for (int d = 0; d < 4; d++) {
+				int nextR = i + dR[d];
+				int nextC = j + dC[d];
 
-					if (nr < 1 || nc < 1 || nr > N || nc > N) continue; // 격자 벗어나면 넘어감
+				if (nextR < 1 || nextC < 1 || nextR > N || nextC > N) continue;
+				if (map[nextR][nextC] >= 1 && map[nextR][nextC] <= 9) continue;
+				if (checkDis(nextR, nextC, exit.first, exit.second) != (curDis - 1)) continue;
 
-					int nDis = abs(nr - exitPoint.first) + abs(nc - exitPoint.second);
-					// 최단거리가 더 가까워진다면 
-					if (nDis < curDis) {
-						if (map[nr][nc].state == 0) { // 다음 좌표가 빈칸일때 
-							newMap[nr][nc].player += map[i][j].player; // newMap에 player 누적
-							answer += map[i][j].player; //참가자 이동거리 누적
-							map[i][j].player = 0; // 기존 맵에서 player 제거
-							moveFlag = true; // 움직였다고 표시
-							break;
-						}
-						else if (map[nr][nc].state == 10) { // 다음 좌표가 출구면
-							answer += map[i][j].player; // 참가자 이동거리 누적
-							map[i][j].player = 0; // 기존 맵에서 palyer 제거
-							moveFlag = true; // 움직였다고 표시
-							break;
-						}
-					}
+				sumMoveDis -= map[i][j];
+				tempMap[i][j] -= map[i][j]; //**주의** N명 이동하면 그맵에 +N해야됨(-(-N) = +N). -2가 다른쪽으로 가는거니까!
+				if (map[nextR][nextC] == 10) { // 출구일때
+					break;
 				}
-
-				if (!moveFlag) { // 안 움직였으면 플레이어 움직이지 않은 위치에 복사(누적해야함)
-					newMap[i][j].player += map[i][j].player;
+				else { // 출구가 아닌 빈칸이나 참가자일때
+					tempMap[nextR][nextC] += map[i][j];
+					break;
 				}
 			}
 		}
 	}
 
-	// map에다가 newMap 복사
-	for (int i = 1; i <= N; i++) {
-		for (int j = 1; j <= N; j++) {
-			map[i][j]= newMap[i][j];
+	// 옮길땐 tempMap을 활용하여 옮긴다
+	copyMap(map, tempMap);
+}
+
+void copyMap(vector<vector<int>>& map1, vector<vector<int>>& map2) {
+	for (int r = 1; r <= N; r++) {
+		for (int c = 1; c <= N; c++) {
+			map1[r][c] = map2[r][c];
 		}
 	}
 }
 
-bool isGameover(){ // 참가자가 미로를 다 탈출했나 ?
+int checkDis(int i, int j, int r, int c) {
+	return abs(i - r) + abs(j - c);
+}
+
+void rotate() {
+	// 사람과 출구 r, c 비교를 통해 더 '큰' 차이를 기록해놓고 그걸 size로 정함, 그후 제일 작은 minSize를 찾아내
+	getMinSize();
+
+	// 맵 순회하면서 좌상단 좌표기준 minSize 까지를 체킹하면서 출구와 사람이 있다면 그 사각형으로 선정한다.
+	int recR = 0, recC = 0;
+	bool flag = false;
+	for (int r = 1; r <= N - minSize; r++) { // **주의** 사각형 체킹할때 N -minSize 안해줘서 범위밖까지 체킹하다 오류
+		for (int c = 1; c <= N - minSize; c++) {
+			if (checkRec(r, c)) {
+				recR = r;
+				recC = c;
+				flag = true;
+				break;
+			}
+		}
+		if (flag) break;
+	}
+
+	// 디버깅용
+	//cout << "minSize" << "\n";
+	//cout << minSize << "\n";
+	//cout << "FLAG" << "\n";
+	//cout << flag << "\n";
+	//cout << "recRC" << "\n";
+	//cout << recR << " " << recC << " " << "\n";
+	
+
+
+	// 선정된 사각형을 돌린다.
+	vector<vector<int>> tempMap1(minSize + 2, vector<int>(minSize + 2));
+	vector<vector<int>> tempMap2(minSize + 2, vector<int>(minSize + 2));
+
+	for (int i = recR; i <= recR + minSize; i++) {
+		for (int j = recC; j <= recC + minSize; j++) {
+			tempMap1[i - recR + 1][j - recC + 1] = map[i][j];
+		}
+	}
+
+	for (int i = 1; i <= minSize + 1; i++) {
+		for (int j = 1; j <= minSize + 1; j++) {
+			tempMap2[j][minSize + 1 - i + 1] = tempMap1[i][j];
+		}
+	}
+
+	for (int i = recR; i <= recR + minSize; i++) {
+		for (int j = recC; j <= recC + minSize; j++) {
+			map[i][j] = tempMap2[i - recR + 1][j - recC + 1];
+		}
+	}
+
+	// 회전된 벽은 내구도 깎인다.
+	for (int i = recR; i <= recR + minSize; i++) {
+		for (int j = recC; j <= recC + minSize; j++) {
+			if (map[i][j] >= 1 && map[i][j] <= 9) map[i][j]--;
+		}
+	}
+}
+
+bool checkRec(int r, int c) {
+	bool personFlag = false;
+	bool exitFlag = false;
+	// 디버깅용
+	//cout << "minSize" << "\n";
+	//cout << minSize << "\n";
+	//cout << "rc" << "\n";
+	//cout << r << " " << c << "\n";
+
+	for (int i = r; i <= r + minSize; i++) {
+		for (int j = c; j <= c + minSize; j++) {
+			if (map[i][j] < 0) { 
+				personFlag = true;
+				/*cout << "DETECT person" << "\n";
+				cout << "rc" << "\n";
+				cout << i << " " << j << "\n";
+				cout << "MAP[i][j]" << "\n";
+				cout << map[i][j] << "\n";*/
+			}
+			if (map[i][j] == 10) {
+				exitFlag = true; 
+			/*	cout << "DETECT exit" << "\n";
+				cout << "rc" << "\n";
+				cout << i << " " << j << "\n";
+				cout << "MAP[i][j]" << "\n";
+				cout << map[i][j] << "\n";*/
+			}
+		}
+	}
+
+	if (personFlag && exitFlag) return true; 
+	else return false;	// **주의** return false가 아니라 그냥 false라 썼었음
+}
+
+void getMinSize() {
+	pair<int, int> exit = checkExit();
+
 	for (int i = 1; i <= N; i++) {
 		for (int j = 1; j <= N; j++) {
-			if (map[i][j].player > 0) return false;
+			if (map[i][j] >= 0) continue; // 사람이 아니면 넘어가
+			minSize = min(minSize, getSize(i, j, exit.first, exit.second));
+		}
+	}
+}
+
+int getSize(int r, int c, int exitR, int exitC) {
+	int absR = abs(r - exitR);
+	int absC = abs(c - exitC);
+	return max(absR, absC);
+}
+
+bool checkGG() {
+	for (int i = 1; i <= N; i++) {
+		for (int j = 1; j <= N; j++) {
+			if (map[i][j] < 0) return false; // 사람이면 false 
 		}
 	}
 	return true;
 }
 
-void rotate() {
-	// 가장 작은 정사각형의 크기를 먼저 구하고 -> 완탐으로 출구좌표에서 참가자의 거리 조사(그 중 max) minL보다 작으면 갱신 하는 식으로
-	int minL = 10000;
+pair<int, int> checkExit() {
 	for (int i = 1; i <= N; i++) {
 		for (int j = 1; j <= N; j++) {
-			if (map[i][j].player > 0) {
-				int curL = max(abs(i - exitPoint.first), abs(j - exitPoint.second));
+			// exit칸에서 로직발동
+			if (map[i][j] != 10) continue;
 
-				if (curL < minL) minL = curL;
-			}
+			return { i, j }; // **의문** pair를 이렇게 넘겨도 되는건가
 		}
 	}
-
-	// 탐색하면서 정사각형을 선택, 좌상단 좌표를 찾아야함
-	minL++; // 기존 minL에 1을 더해야 정사각형의 길이
-	pair<int, int> rec = { 0, 0 };
-	for (int i = 1; i <= N - (minL - 1) ; i++) {
-		for (int j = 1; j <= N - (minL - 1); j++) {
-
-			// 좌상단 i,j ~ i + minL - 1, j + minL - 1까지 확인해봐야함, 그 안에 출구랑 참가자 둘다 존재하는지
-			bool playerFlag = false;
-			bool exitFlag = false;
-			for (int r = i; r <= i + (minL - 1); r++) {
-				for (int c = j; c <= j + (minL - 1); c++) {
-					if (map[r][c].player > 0) playerFlag = true;
-					if (map[r][c].state == 10) exitFlag = true;
-					if (playerFlag && exitFlag) rec = { i, j }; // 둘다 존재하면 rec 좌표에 저장
-				}
-			}
-			if (rec.first > 0) break;
-		}
-		if (rec.first > 0) break;
-	}
-
-	// 선택된 정사각형을 90도로 회전 및, 벽 내구도 감소
-	subrotate(rec.first, rec.second, minL);
-
-}
-
-void subrotate(int r, int c, int minL) { // 선택된 정사각형을 90도로 회전 및, 벽 내구도 감소
-	vector<vector<Vertex>> newMap1(minL + 1, vector<Vertex> (minL + 1));
-	vector<vector<Vertex>> newMap2(minL + 1, vector<Vertex> (minL + 1));
-
-	// 원래 사각형에서 newMap1으로 복사
-	for (int i = r; i <= r + (minL - 1); i++) {
-		for (int j = c; j <= c + (minL - 1); j++) {
-			newMap1[i - r + 1][j - c + 1] = map[i][j];
-		}
-	}
-	// newMap1에서 newMap2로 회전 (r, c) -> (c, n- r + 1)
-	for (int i = 1; i <= minL; i++) {
-		for (int j = 1; j <= minL; j++) {
-			if (newMap1[i][j].state > 0 && newMap1[i][j].state < 10) newMap1[i][j].state--; // 벽이면 내구도 감소
-			newMap2[j][minL - i + 1] = newMap1[i][j];
-		}
-	}
-
-	// newMap2에서 원래 사각형으로 복사
-	for (int i = r; i <= r + (minL - 1); i++) {
-		for (int j = c; j <= c + (minL - 1); j++) {
-			map[i][j] = newMap2[i - r + 1][j - c + 1];
-		}
-	}
-}
-
-void getExitPoint() {
-	for (int i = 1; i <= N; i++) {
-		for (int j = 1; j <= N; j++) {
-			if (map[i][j].state == 10) exitPoint = {i, j};
-		}
-	}
-}
-
-
-
-// 메인 함수
-int main() {
-	cin >> N >> M >> K;
-	map = vector<vector<Vertex>>(N + 1, vector<Vertex>(N + 1));
-	// 맵 좌표
-	for (int i = 1; i <= N; i++) {
-		for (int j = 1; j <= N; j++) {
-			cin >> map[i][j].state; // 벽과 빈칸 기록
-		}
-	}
-	// 참가자 좌표
-	for (int i = 0; i < M; i++) {
-		int pr, pc;
-		cin >> pr >> pc;
-		map[pr][pc].player++; // 참가자 여러명이 한 곳 에 있을 수 있음
-	}
-	// 출구 좌표
-	int er, ec;
-	cin >> er >> ec;
-	exitPoint = { er, ec }; // 출구 좌표 등록
-	map[er][ec].state = 10; // 맵에도 표시
-
-	answer = 0;
-	for (int i = 1; i <= K; i++) {
-		move();// 이동
-		if (isGameover()) break;// 참가자 미로 다 탈출 했으면 종료 -> 이동과정에서 exit 이 바뀔일은 없으니까 바로 종료해도됨
-		rotate();// 회전
-		getExitPoint();// 출구 좌표 기록
-	}
-	cout << answer << endl;
-	cout << exitPoint.first << " " << exitPoint.second << endl;
 }
