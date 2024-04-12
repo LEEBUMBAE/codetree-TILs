@@ -42,30 +42,13 @@ int main() {
 
 
 	sumMoveDis = 0;
-	for (int k = 1; k <= 8; k++) {
+	for (int k = 1; k <= K; k++) {
 		move();
-
-		//cout << "AFTER MOVE" << "\n";
-		//for (int i = 1; i <= N; i++) {
-		//	for (int j = 1; j <= N; j++) {
-		//		cout << map[i][j] << " ";
-		//	}
-		//	cout << "\n";
-		//}
-
 		if (checkGG()) {
 			break;
 		}
 		minSize = 2100000000;
 		rotate();
-
-		//cout << "AFTER rotate" << "\n";
-		//for (int i = 1; i <= N; i++) {
-		//	for (int j = 1; j <= N; j++) {
-		//		cout << map[i][j] << " ";
-		//	}
-		//	cout << "\n";
-		//}
 	}
 	pair<int, int> exitPoint = checkExit();
 	cout << sumMoveDis << "\n";
@@ -143,16 +126,6 @@ void rotate() {
 		if (flag) break;
 	}
 
-	// 디버깅용
-	//cout << "minSize" << "\n";
-	//cout << minSize << "\n";
-	//cout << "FLAG" << "\n";
-	//cout << flag << "\n";
-	//cout << "recRC" << "\n";
-	//cout << recR << " " << recC << " " << "\n";
-	
-
-
 	// 선정된 사각형을 돌린다.
 	vector<vector<int>> tempMap1(minSize + 2, vector<int>(minSize + 2));
 	vector<vector<int>> tempMap2(minSize + 2, vector<int>(minSize + 2));
@@ -186,29 +159,14 @@ void rotate() {
 bool checkRec(int r, int c) {
 	bool personFlag = false;
 	bool exitFlag = false;
-	// 디버깅용
-	//cout << "minSize" << "\n";
-	//cout << minSize << "\n";
-	//cout << "rc" << "\n";
-	//cout << r << " " << c << "\n";
 
 	for (int i = r; i <= r + minSize; i++) {
 		for (int j = c; j <= c + minSize; j++) {
 			if (map[i][j] < 0) { 
 				personFlag = true;
-				/*cout << "DETECT person" << "\n";
-				cout << "rc" << "\n";
-				cout << i << " " << j << "\n";
-				cout << "MAP[i][j]" << "\n";
-				cout << map[i][j] << "\n";*/
 			}
 			if (map[i][j] == 10) {
 				exitFlag = true; 
-			/*	cout << "DETECT exit" << "\n";
-				cout << "rc" << "\n";
-				cout << i << " " << j << "\n";
-				cout << "MAP[i][j]" << "\n";
-				cout << map[i][j] << "\n";*/
 			}
 		}
 	}
