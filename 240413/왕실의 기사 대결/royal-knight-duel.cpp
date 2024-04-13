@@ -143,15 +143,20 @@ void doMove(int knightN, int dir) {
 	for (int i = 1; i <= L; i++) {
 		for (int j = 1; j <= L; j++) {
 			int tempKnightN = knightMap[i][j];
-			if (!knightVisited[tempKnightN] && knightN != tempKnightN) continue;
-			tempKnightMap[i + dR[dir]][j + dC[dir]] = tempKnightN;
+			if (tempKnightN == 0) continue;
+			if (!knightVisited[tempKnightN] && knightN != tempKnightN) {
+				tempKnightMap[i][j] = tempKnightN;
+			}
+			else {
+				tempKnightMap[i + dR[dir]][j + dC[dir]] = tempKnightN;
+			}
 		}
 	}
 	copyMap(knightMap, tempKnightMap);
 	
 	// 기사배열에서 옮기기
 	for (int i = 1; i <= N; i++) {
-		if (!knightVisited[i] || knightN != i) continue;
+		if (!knightVisited[i] && knightN != i) continue;
 		knightList[i].r += dR[dir];
 		knightList[i].c += dC[dir];
 	}
