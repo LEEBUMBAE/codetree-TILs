@@ -193,7 +193,7 @@ void deadKnight() {
 		int w = knightList[n].w;
 
 		for (int i = r; i < r + h; i++) {
-			for (int j = c; j <= c + w; j++) {
+			for (int j = c; j < c + w; j++) {
 				knightMap[i][j] = 0;
 			}
 		}
