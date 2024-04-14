@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <queue>
+#include<algorithm>
 
 /*빠트렸던 부분은 이런식으로 기록해뒀음*/
 using namespace std;
@@ -46,6 +47,7 @@ void bombAttack(Tower& attacker, Tower& isAttacked);
 void breakTower();
 int repairTower(int cnt);
 int whoIsWinner();
+bool cmpAttacker(const Tower& t1, const Tower& t2);
 
 int main() {
     int ans = 0; // 정답
@@ -89,32 +91,27 @@ int main() {
     return 0;
 }
 
+bool cmpAttacker(const Tower& t1, const Tower& t2) {
+    if (t1.p != t2.p) return t1.p < t2.p;
+    if (t1.t != t2.t) return t1.t > t2.t;
+    if (t1.r + t1.c != t2.r + t2.c) return t1.r + t1.c > t2.r + t2.c;
+    return t1.c > t2.c;
+}
+
 // 공격자 선정
 Tower pickAttacker(int turn) {
     Tower attacker; // 선정된 공격자
-
+    vector<Tower> towerList;
     for (int i = 1; i <= N; i++) {
         for (int j = 1; j <= M; j++) {
             if ((map[i][j].p != 0) && (attacker.p >= map[i][j].p)) { // 부서진 포탑이 아니고, 공격력 보다 낮거나 같으면
-                if (attacker.p == map[i][j].p) { // 공격력이 같다면
-                    if (attacker.t <= map[i][j].t) { // 최근공격이 더 최근이거나 같다면
-                        if (attacker.t == map[i][j].t) { // 최근 공격 같다면
-                            if ((attacker.r + attacker.c) <= (map[i][j].r + map[i][j].c)) { // r+c가 크거나 같으면
-                                if ((attacker.r + attacker.c) == (map[i][j].r + map[i][j].c)) { // r+c가 같다면
-                                    if (attacker.c < map[i][j].c) {
-                                        attacker = map[i][j]; // c가 큰 포탑이 선정됨
-                                    }
-                                }
-                                else attacker = map[i][j]; // r+c가 큰 공격포탑이 선정됨   
-                            }
-                        }
-                        else attacker = map[i][j]; // 최근 공격포탑이 선정됨
-                    }
-                }
-                else attacker = map[i][j]; // 공격력 낮은놈이 선정됨
+                towerList.push_back(map[i][j]);
             }
         }
     }
+    sort(towerList.begin(), towerList.end(), cmpAttacker);
+    attacker = towerList[0];
+    
     map[attacker.r][attacker.c].t = turn; // 최근 공격턴 갱신 /* 빠트렸던 부분 */
     map[attacker.r][attacker.c].p += N + M; // 공격력 증가
     attacker.p = map[attacker.r][attacker.c].p; // 공격력 증가
