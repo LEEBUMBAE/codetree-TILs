@@ -50,11 +50,11 @@ int whoIsWinner();
 int main() {
     int ans = 0; // 정답
     cin >> N >> M >> K; // 행 열 턴 입력
-    map = vector<vector<Tower>>(N, vector<Tower>(M)); // 맵의 크기가 정해지면 할당
+    map = vector<vector<Tower>>(N + 1, vector<Tower>(M + 1)); // 맵의 크기가 정해지면 할당
 
     // 맵에 입력 받기
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < M; j++) {
+    for (int i = 1; i <= N; i++) {
+        for (int j = 1; j <= M; j++) {
             cin >> map[i][j].p; // 파워 입력
             map[i][j].r = i; // 행 위치 저장
             map[i][j].c = j; // 열 위치 저장
@@ -63,12 +63,12 @@ int main() {
     }
 
     //액션 수행 K번 턴 반복
-    for (int i = 0; i < K; i++) {
-        route = vector<vector<bool>>(N, vector<bool>(M, false)); // 포탑 정비 제외할놈 
+    for (int i = 1; i <= K; i++) {
+        route = vector<vector<bool>>(N + 1, vector<bool>(M + 1, false)); // 포탑 정비 제외할놈 
         int cnt = 0; // 살아 있는 포탑수
 
-        Tower attacker = pickAttacker(i + 1); // 1.공격자 선정 
-        Tower isAttacked = pickIsAttacked(attacker, i + 1); // 2.피격자 선정
+        Tower attacker = pickAttacker(i); // 1.공격자 선정 
+        Tower isAttacked = pickIsAttacked(attacker, i); // 2.피격자 선정
         if (!lazerAttack(attacker, isAttacked)) { // 2. 공격
             bombAttack(attacker, isAttacked);
         }
@@ -79,7 +79,7 @@ int main() {
             ans = whoIsWinner();
             break;
         }
-        if (i == K - 1) { // 마지막 턴엔 
+        if (i == K) { // 마지막 턴엔 
             ans = whoIsWinner(); // 남아 있는 놈중 가장 강한놈 선정
         }
     }
@@ -93,8 +93,8 @@ int main() {
 Tower pickAttacker(int turn) {
     Tower attacker; // 선정된 공격자
 
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < M; j++) {
+    for (int i = 1; i <= N; i++) {
+        for (int j = 1; j <= M; j++) {
             if ((map[i][j].p != 0) && (attacker.p >= map[i][j].p)) { // 부서진 포탑이 아니고, 공격력 보다 낮거나 같으면
                 if (attacker.p == map[i][j].p) { // 공격력이 같다면
                     if (attacker.t <= map[i][j].t) { // 최근공격이 더 최근이거나 같다면
@@ -126,8 +126,8 @@ Tower pickAttacker(int turn) {
 Tower pickIsAttacked(Tower& attacker, int turn) {
     Tower isAttacked(-1, -1, 0, -1, -1, -1); // 피격자
 
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < M; j++) {
+    for (int i = 1; i <= N; i++) {
+        for (int j = 1; j <= M; j++) {
             if (!((attacker.r == i) && (attacker.c == j))) { // 공격자는 제외
                 if ((map[i][j].p != 0) && (isAttacked.p <= map[i][j].p)) { // 부서진 포탑이 아니고, 공격력 보다 크거나 같으면
                     if (isAttacked.p == map[i][j].p) { // 공격력이 같다면
@@ -157,7 +157,7 @@ Tower pickIsAttacked(Tower& attacker, int turn) {
 
 // 레이저 공격
 bool lazerAttack(Tower& attacker, Tower& isAttacked) {
-    vector<vector<bool>> visited(N, vector<bool>(M, false)); // 방문여부 저장할 곳
+    vector<vector<bool>> visited(N + 1, vector<bool>(M + 1, false)); // 방문여부 저장할 곳
     queue<Tower> q; // bfs할 q
     bool canLazerAttack = false; // 레이저 공격 가능여부
 
@@ -174,8 +174,8 @@ bool lazerAttack(Tower& attacker, Tower& isAttacked) {
         }
 
         for (int i = 0; i < 4; i++) { // cur 기준 사방 탐색
-            int nextR = (N + cur.r + dr[i]) % N;
-            int nextC = (M + cur.c + dc[i]) % M;
+            int nextR = (N + cur.r + dr[i] - 1) % N + 1;
+            int nextC = (M + cur.c + dc[i] - 1) % M + 1;
 
             if (map[nextR][nextC].p != 0 && !visited[nextR][nextC]) { // 부서진곳 아니고, 방문 안 한곳이면
                 visited[nextR][nextC] = true; // 방문
@@ -208,8 +208,8 @@ bool lazerAttack(Tower& attacker, Tower& isAttacked) {
 void bombAttack(Tower& attacker, Tower& isAttacked) {
     map[isAttacked.r][isAttacked.c].p -= map[attacker.r][attacker.c].p; // 피격자는 공격자만큼 파워 감소
     for (int i = 0; i < 8; i++) { // 8방 공격
-        int nextR = (N + isAttacked.r + dr8[i]) % N; /*% 해줘야했던거 빠트렸던 부분 */
-        int nextC = (M + isAttacked.c + dc8[i]) % M; /*% 해줘야했던거 빠트렸던 부분 */
+        int nextR = (N + isAttacked.r + dr8[i] - 1) % N + 1; /*% 해줘야했던거 빠트렸던 부분 */
+        int nextC = (M + isAttacked.c + dc8[i] - 1) % M + 1; /*% 해줘야했던거 빠트렸던 부분 */
 
         if (attacker.r == nextR && attacker.c == nextC) continue; // 공격자는 공격 안 받음
 
@@ -220,8 +220,8 @@ void bombAttack(Tower& attacker, Tower& isAttacked) {
 
 // 포탑 부서짐
 void breakTower() {
-    for (int i = 0; i < N; i++) { // 공격력 0 이하된 포탑은 부서짐
-        for (int j = 0; j < M; j++) {
+    for (int i = 1; i <= N; i++) { // 공격력 0 이하된 포탑은 부서짐
+        for (int j = 1; j <= M; j++) {
             if (map[i][j].p <= 0) map[i][j].p = 0;
         }
     }
@@ -229,8 +229,8 @@ void breakTower() {
 
 // 포탑 정비
 int repairTower(int cnt) {
-    for (int i = 0; i < N; i++) { // 포탑 정비
-        for (int j = 0; j < M; j++) {
+    for (int i = 1; i <= N; i++) { // 포탑 정비
+        for (int j = 1; j <= M; j++) {
             if (map[i][j].p != 0 && route[i][j] == false) {
                 map[i][j].p += 1;
             }
@@ -245,8 +245,8 @@ int repairTower(int cnt) {
 // 남은 놈중 가장 강한놈
 int whoIsWinner() {
     int kingPower = 0;
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < M; j++) {
+    for (int i = 1; i <= N; i++) {
+        for (int j = 1; j <= M; j++) {
             if (map[i][j].p > kingPower) kingPower = map[i][j].p;
         }
     }
