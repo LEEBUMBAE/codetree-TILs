@@ -123,30 +123,18 @@ Tower pickAttacker(int turn) {
 Tower pickIsAttacked(Tower& attacker, int turn) {
     Tower isAttacked(-1, -1, 0, -1, -1, -1); // 피격자
 
+    vector<Tower> towerList;
     for (int i = 1; i <= N; i++) {
         for (int j = 1; j <= M; j++) {
             if (!((attacker.r == i) && (attacker.c == j))) { // 공격자는 제외
                 if ((map[i][j].p != 0) && (isAttacked.p <= map[i][j].p)) { // 부서진 포탑이 아니고, 공격력 보다 크거나 같으면
-                    if (isAttacked.p == map[i][j].p) { // 공격력이 같다면
-                        if (isAttacked.t >= map[i][j].t) { // 최근공격이 더 오래되거나 같다면
-                            if (isAttacked.t == map[i][j].t) { // 최근 공격 같다면
-                                if ((isAttacked.r + isAttacked.c) >= (map[i][j].r + map[i][j].c)) { // r+c가 작거나 같으면
-                                    if ((isAttacked.r + isAttacked.c) == (map[i][j].r + map[i][j].c)) { // r+c가 같다면
-                                        if (isAttacked.c > map[i][j].c) { // c가 작다면
-                                            isAttacked = map[i][j];
-                                        }
-                                    }
-                                    else isAttacked = map[i][j]; // r+c가 작다면
-                                }
-                            }
-                            else isAttacked = map[i][j]; // 최근 공격 오래됐다면
-                        }
-                    }
-                    else isAttacked = map[i][j]; // 공격력 더 크다면
+                    towerList.push_back(map[i][j]);
                 }
             }
         }
     }
+    sort(towerList.begin(), towerList.end(), cmpAttacker);
+    isAttacked = towerList[towerList.size() - 1];
 
     route[isAttacked.r][isAttacked.c] = true; // 피격자 4. 포탑정비에서 제외
     return isAttacked;
