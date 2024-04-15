@@ -128,11 +128,14 @@ bool canDown(int r, int c) {
     int curC = c + dC[2];
 
     for (int d = 0; d < 5; d++) {
-        int nextR = curR;
-        int nextC = curC;
+        int nextR, nextC;
         if (d < 4) {
             nextR = curR + dR[d];
             nextC = curC + dC[d];
+        }
+        else {
+            nextR = curR;
+            nextC = curC;
         }
 
         if (nextR < 0 || nextC < 0 || nextR > R + 2 || nextC > C - 1) {
